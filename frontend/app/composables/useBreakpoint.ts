@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
 import { useBreakpoints } from "@vueuse/core";
 
 import { BreakpointMap } from "~/types/breakpoint-map";
@@ -19,5 +18,11 @@ export default function useBreakpoint(
     "sm" | "md" | "lg" | "xl" | "2xl" | "xxl" | "3xl" | "xxxl"
   >
 ): Ref<boolean> {
+  // Use Vite/Nuxt SSR detection
+  if (import.meta.server) {
+    // Default: treat SSR as "desktop"
+    return ref(true); // or false for mobile, but be consistent!
+  }
+  // On client, use VueUse breakpoints
   return breakpoints.greaterOrEqual(breakpointName);
 }

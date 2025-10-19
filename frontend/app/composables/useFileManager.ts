@@ -3,8 +3,6 @@ import type { ContentImage, FileUploadMix } from "~/types/content/file";
 
 import { UploadableFile } from "~/types/content/file";
 
-const { token } = useAuth();
-
 const defaultImageUrls = computed(() => {
   const colorMode = useColorMode();
   const imageColor = colorMode.value === "light" ? "light" : "dark";
@@ -16,6 +14,7 @@ const defaultImageUrls = computed(() => {
 });
 
 export function useFileManager() {
+  const { token } = useAuth();
   const uploadError = ref(false);
 
   async function deleteImage(imageId: string) {

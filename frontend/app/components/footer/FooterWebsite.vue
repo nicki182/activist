@@ -2,44 +2,17 @@
 <template>
   <footer class="responsive-px-5 responsive-py-5 bg-layer-2 text-distinct-text">
     <!-- Note: Content Sections Top for Mobile -->
-    <FooterFlexCol v-if="isMobileDevice" class="flex flex-col" :links="links" />
+    <FooterFlexCol v-if="!aboveLargeBP" class="flex flex-col" :links="links" />
     <!-- Note: Content Sections Left and Right for Desktop (xl) -->
     <FooterFlex v-else class="flex" :links="links" />
   </footer>
 </template>
 
 <script setup lang="ts">
-import { BreakpointMap } from "~/types/breakpoint-map";
+import useBreakpoint from "~/composables/useBreakpoint";
 import { IconMap } from "~/types/icon-map";
 
-const currentWidth = ref(window.innerWidth);
-const isMobileDevice = ref(false);
-let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-
-const updateWidth = () => {
-  currentWidth.value = window.innerWidth;
-  if (currentWidth.value < BreakpointMap.LARGE) {
-    isMobileDevice.value = true;
-  } else {
-    isMobileDevice.value = false;
-  }
-};
-
-const handleResize = () => {
-  if (resizeTimeout) {
-    clearTimeout(resizeTimeout);
-  }
-  resizeTimeout = setTimeout(updateWidth, 10);
-};
-
-onMounted(() => {
-  window.addEventListener("resize", handleResize);
-  updateWidth();
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", handleResize);
-});
+const aboveLargeBP = useBreakpoint("lg");
 
 const connectLinks = [
   {

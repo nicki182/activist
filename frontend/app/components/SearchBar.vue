@@ -118,13 +118,14 @@ export interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   expanded: false,
+  modelValue: "",
 });
 
 const localValue = ref(props.modelValue || "");
 watch(
   props,
   (newVal) => {
-    localValue.value = newVal.modelValue || "";
+    localValue.value = newVal?.modelValue || "";
   },
   { immediate: true }
 );

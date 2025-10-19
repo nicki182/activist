@@ -145,14 +145,14 @@ const aboveMediumBP = useBreakpoint("md");
 const aboveLargeBP = useBreakpoint("lg");
 
 const devMode = useDevMode();
-devMode.check();
-
 const { userIsSignedIn } = useUser();
 
 const headerOpacity: Ref<number> = ref(1);
 const prevScrollY: Ref<number> = ref(0);
 
 function handleScroll() {
+  // Client only: window/document
+  if (!import.meta.client) return;
   const scrollY = window.scrollY;
 
   if (scrollY > document.getElementsByTagName("header")[0]!.clientHeight) {
@@ -167,10 +167,13 @@ function handleScroll() {
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
+  devMode.check();
 });
 
 onUnmounted(() => {
-  window.removeEventListener("scroll", handleScroll);
+  if (import.meta.client) {
+    window.removeEventListener("scroll", handleScroll);
+  }
 });
 </script>
 

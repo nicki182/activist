@@ -21,7 +21,7 @@ if (process.env.VITEST) {
   // These modules currently do not work in a vitest environment:
   // @pinia/nuxt
   // pinia-plugin-persistedstate/nuxt
-  modules.push("@pinia/nuxt", vueUse, "pinia-plugin-persistedstate/nuxt");
+  modules.push("@pinia/nuxt", vueUse);
 }
 
 export default modules;

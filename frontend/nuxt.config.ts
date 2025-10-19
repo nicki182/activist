@@ -13,14 +13,21 @@ export default defineNuxtConfig({
   app: {
     head,
   },
-
+  runtimeConfig: {
+    // Used by the Nuxt server (SSR / Nitro) to reach your backend
+    apiBase: process.env.NUXT_API_BASE || "http://api:8000",
+    public: {
+      // Not used by the proxy, but handy if you still call the backend from the browser anywhere
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:8000",
+    },
+  },
   auth: {
-    baseURL: process.env.VITE_BACKEND_URL || "http://localhost:8000/api/auth",
+    baseURL: process.env.NUXT_API_BASE || "http://localhost:8000/v1",
     provider: {
       type: "local",
       isEnabled: true,
       disableServerSideAuth: false,
-      originEnvKey: "VITE_BACKEND_URL",
+      originEnvKey: "NUXT_API_BASE",
       pages: {
         login: "/auth/sign-in",
       },
@@ -72,13 +79,13 @@ export default defineNuxtConfig({
     },
   },
   modules: process.env.VITEST ? [] : modules,
-  ssr: false,
+  ssr: true,
 
   devtools: {
     enabled: true,
   },
 
-  plugins: ["~/plugins/i18n-head.ts"],
+  plugins: ["~/plugins/i18n-head.ts", "~/plugins/error-watcher.ts"],
 
   imports: {
     dirs: ["./stores"],

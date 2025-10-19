@@ -136,6 +136,7 @@ const copyToClipboardThenOpenUrl = async (
   url: string,
   redirectUrl?: string
 ) => {
+  if (!import.meta.client) return; // Only run on client!
   try {
     await navigator.clipboard.writeText(url);
     contentCopied.value = true;

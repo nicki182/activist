@@ -1,10 +1,11 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <template>
   <NuxtLoadingIndicator color="#F0A14C" />
   <HeaderMobile />
-  <MenuMobileNavigationDropdown v-if="!aboveMediumBP" />
+  <client-only>
+    <MenuMobileNavigationDropdown v-if="!aboveMediumBP" />
+    <MenuMobileNavBar v-if="!aboveMediumBP" />
+  </client-only>
   <slot />
-  <MenuMobileNavBar v-if="!aboveMediumBP" />
 </template>
 
 <script setup lang="ts">

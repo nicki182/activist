@@ -77,6 +77,11 @@ services:
       - "24678:24678"
     environment:
       - USE_PREVIEW=${USE_PREVIEW:-false}
+      - DEBUG=*
+      # Critical: Nuxt SSR/Nitro will reach Django via the Compose service name "backend"
+      - NUXT_API_BASE=http://backend:${BACKEND_PORT}
+      # Optional: o|nly needed if you still make direct client-side calls (bypassing /api proxy)
+      - NUXT_PUBLIC_API_BASE=http://localhost:${BACKEND_PORT}
     healthcheck:
       test:
         ["CMD-SHELL", "curl -f http://localhost:${FRONTEND_PORT}/ || exit 1"]

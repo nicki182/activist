@@ -19,14 +19,18 @@
         </span>
         <span v-if="index !== displayBreadcrumbs.length - 1">
           <NuxtLink
-            v-if="isValidUUID(breadcrumb) && pageType == 'event'"
+            v-if="isValidUUID(breadcrumb) && pageType == 'event' && event"
             class="text-distinct-text focus-brand hover:text-primary-text"
             :to="makeURL(breadcrumb)"
           >
             {{ event.name }}
           </NuxtLink>
           <NuxtLink
-            v-else-if="isValidUUID(breadcrumb) && pageType == 'organization'"
+            v-else-if="
+              isValidUUID(breadcrumb) &&
+              pageType == 'organization' &&
+              organization
+            "
             class="text-distinct-text focus-brand hover:text-primary-text"
             :to="makeURL(breadcrumb)"
           >
@@ -34,7 +38,10 @@
           </NuxtLink>
           <NuxtLink
             v-else-if="
-              isValidUUID(breadcrumb) && pageType == 'group' && index == 1
+              isValidUUID(breadcrumb) &&
+              pageType == 'group' &&
+              index == 1 &&
+              group
             "
             class="text-distinct-text focus-brand hover:text-primary-text"
             :to="makeURL(breadcrumb)"
@@ -43,7 +50,10 @@
           </NuxtLink>
           <NuxtLink
             v-else-if="
-              isValidUUID(breadcrumb) && pageType == 'group' && index == 3
+              isValidUUID(breadcrumb) &&
+              pageType == 'group' &&
+              index == 3 &&
+              group
             "
             class="text-distinct-text focus-brand hover:text-primary-text"
             :to="makeURL(breadcrumb)"
@@ -83,7 +93,8 @@ import { getGroup } from "~/services/communities/group/group";
 import { getOrganization } from "~/services/communities/organization/organization";
 import { getEvent } from "~/services/event/event";
 
-const url = window.location.href;
+const route = useRoute();
+const url = route.fullPath;
 let pageType = "";
 
 const { locales } = useI18n();

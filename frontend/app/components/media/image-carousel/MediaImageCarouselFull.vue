@@ -48,7 +48,7 @@ const imageUrls = ref<string[]>([]);
 watch(
   props,
   (newValue) => {
-    if (newValue.images && newValue.images.length > 0) {
+    if (newValue?.images && newValue.images.length > 0) {
       imageUrls.value = newValue.images.map(
         (image: ContentImage) => `${image.fileObject}`
       );

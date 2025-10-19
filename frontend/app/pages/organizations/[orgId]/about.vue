@@ -110,11 +110,13 @@ const expandReduceText = () => {
   textExpanded.value = !textExpanded.value;
 };
 
-const windowWidth = ref(window.innerWidth);
+const { width } = useWindowSize();
+
+const windowWidth = computed(() => width.value);
+
 const shareButtonLabel = ref("");
 
 function updateShareBtnLabel() {
-  windowWidth.value = window.innerWidth;
   if (windowWidth.value < BreakpointMap.SMALL) {
     shareButtonLabel.value = "i18n._global.share";
   } else {
