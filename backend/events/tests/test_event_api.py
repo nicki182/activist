@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+from datetime import datetime
 from typing import Any, TypedDict
 
 import pytest
+from dateutil.relativedelta import relativedelta
 from rest_framework.test import APIClient
 
 from authentication.factories import UserFactory
@@ -130,6 +132,15 @@ def test_EventListAPIView(logged_in_user) -> None:
     assert response.status_code == 201
     assert Event.objects.filter(name=new_event.name).exists()
 
+    # Incorrect time order.
+    new_event.start_time = "2025-10-20T18:00:00Z"
+    new_event.end_time = "2025-10-20T06:00:00Z"
+    payload["start_time"] = new_event.start_time
+    payload["end_time"] = new_event.end_time
+    response = client.post(EVENTS_URL, data=payload, format="json")
+    assert response.status_code == 400
+    assert "start time must be before the end time" in str(response.data).lower()
+
 
 @pytest.mark.django_db
 def test_EventDetailAPIView(logged_in_user) -> None:  # type: ignore[no-untyped-def]
@@ -149,10 +160,13 @@ def test_EventDetailAPIView(logged_in_user) -> None:  # type: ignore[no-untyped-
 
     # MARK: Detail PUT
 
+    start_date = datetime.now() + relativedelta(years=2)
+    end_dt = datetime.now() + relativedelta(years=2, days=1)
+
     payload = {
         "name": "new_event",
-        "start_time": "2020-09-18T21:39:14",
-        "end_time": "2020-09-18T21:39:14",
+        "start_time": start_date,
+        "end_time": end_dt,
         "terms_checked": True,
     }
     response = client.put(f"{EVENTS_URL}/{new_event.id}", data=payload, format="json")
