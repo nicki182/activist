@@ -9,9 +9,6 @@
 </template>
 
 <script setup lang="ts">
-import useBreakpoint from "~/composables/useBreakpoint";
-import { IconMap } from "~/types/icon-map";
-
 const aboveLargeBP = useBreakpoint("lg");
 
 const connectLinks = [
