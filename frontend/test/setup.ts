@@ -1,120 +1,86 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { config } from "@vue/test-utils";
 import { createPinia, defineStore, setActivePinia } from "pinia";
-import { afterAll, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 import { createI18n } from "vue-i18n";
 
-import type { UseColorModeFn as _UseColorModeFn } from "../test/vitest-globals";
-
 import en from "../i18n/locales/en-US.json" assert { type: "json" };
+import { setupAutoImportMocks } from "./auto-imports";
 
 // Set up Pinia.
 setActivePinia(createPinia());
-
 // Auto-import version of define store doesn't exist in the test env.
 globalThis.defineStore = defineStore;
 
-// ================================
-// GLOBAL AUTO-IMPORT MOCKS
-// ================================
-// These mocks are necessary because components were updated to use Nuxt auto-imports
-// (e.g., commit 82089827 added useI18n() to FormTextEntity.vue), but the tests were
-// never updated to handle these dependencies. Without these mocks, tests fail with
-// "ReferenceError: useI18n is not defined" and similar errors.
+// MARK: Infrastructure-Dependent Mocks Only
 
-// Mock Nuxt auto-imports that are used by components but not available in test environment.
-globalThis.useI18n = () => i18n.global;
-
-globalThis.useLocalePath = () => (path: string) => path;
-
-globalThis.useRoute = () => ({
-  params: {},
-  query: {},
-});
-
-globalThis.useDevice = () => ({
-  isMobile: false,
-  isTablet: false,
-  isDesktop: true,
-});
-
-globalThis.useLocalStorage = (key: string, defaultValue: unknown) => ({
-  value: defaultValue,
-});
-
-globalThis.useAuthState = () => ({
-  data: { value: null }, // nock no user signed in
-});
-
-globalThis.useAuth = () => ({
-  signUp: () => Promise.resolve(),
-  signIn: () => Promise.resolve(),
-  signOut: () => Promise.resolve(),
-  data: { value: null },
-});
-
-globalThis.useUser = () => ({
-  userIsSignedIn: false,
-  userIsAdmin: false,
-  roles: [],
-  signOutUser: () => {},
-  canEdit: canEditMock,
-  canDelete: () => false,
-  canCreate: () => false,
-  canView: () => true,
-});
-
-globalThis.useDebounceFn = <T extends (...args: unknown[]) => unknown>(
-  fn: T,
-  _delay: number
-) => fn;
-
-// Set up Color Mode mock for components that use useColorMode().
-const useColorModeFn = () => ({
+// Set up spy functions for composables that need reset between tests.
+// These are initialized here but tests should use factories from composableMocks.ts
+// to set up their specific mock implementations.
+globalThis.useColorModeMock = vi.fn(() => ({
   preference: "dark" as const,
   value: "dark" as const,
-});
-
-// @ts-expect-error: Property doesn't exist on globalThis
-globalThis.useColorModeMock = vi.fn(useColorModeFn);
-// @ts-expect-error: Property doesn't exist on globalThis
+}));
 globalThis.useColorMode = () => globalThis.useColorModeMock();
 
-// Mock the dev mode store to fix FriendlyCaptcha component.
-globalThis.useDevMode = () => ({
-  active: { value: false },
-  check: () => {}, // mock the check method that FriendlyCaptcha expects
-});
+globalThis.useSidebarMock = vi.fn(() => ({
+  collapsed: false,
+  collapsedSwitch: false,
+}));
+globalThis.useSidebar = () => globalThis.useSidebarMock();
 
+// Mock module-level imports that need to be available globally.
+vi.mock("~/stores/sidebar", () => ({
+  useSidebar: globalThis.useSidebar,
+}));
+
+// Initialize global data reference for useAuthState.
 const data = { value: null };
 globalThis.data = data;
 
-const useAuthStateFn = () => ({
-  data: globalThis.data, // default to no user signed in
-});
-
-globalThis.useAuthStateMock = vi.fn(useAuthStateFn);
+globalThis.useAuthStateMock = vi.fn(() => ({
+  data: globalThis.data, // read from globalThis.data to allow tests to override
+}));
 globalThis.useAuthState = () => globalThis.useAuthStateMock();
 vi.mock("@sidebase/nuxt-auth", () => ({
   useAuthState: globalThis.useAuthState,
 }));
 
+// Auto-import default mocks for composables not manually mocked above.
+// This provides fallback {} mocks for any use* composables that aren't explicitly mocked.
+setupAutoImportMocks();
+
 // Set up I18n.
-// https://github.com/nuxt-modules/i18n/issues/2637#issuecomment-2233566361
+// See: https://github.com/nuxt-modules/i18n/issues/2637#issuecomment-2233566361
 const i18n = createI18n({
   legacy: false,
   locale: "en",
   fallbackLocale: "en",
   messages: Object.assign({ en }),
+  // Suppress missing key warnings in test environment.
+  // Test keys like "i18n.test.button" don't exist in locale files.
+  missingWarn: false,
+  fallbackWarn: false,
 });
 
 config.global.plugins.push(i18n);
 
-// ================================
-// COMPONENT MOCKS
-// ================================
-// Mock Icon component to resolve accessibility issues in password validation tests
-// The sign-up tests expect icons with specific aria-labels and colors for password validation
+// Set up useI18n after i18n instance is created (infrastructure-dependent).
+globalThis.useI18n = () => i18n.global;
+
+const originalCreateObjectURL = URL.createObjectURL;
+URL.createObjectURL = (obj: Blob | MediaSource) => {
+  // In test environment, accept any Blob-like object and return a mock URL.
+  if (obj instanceof Blob || (obj as unknown) instanceof File) {
+    return `blob:mock-${Math.random().toString(36).slice(2)}`;
+  }
+  return originalCreateObjectURL.call(URL, obj);
+};
+
+// MARK: Component Mocks
+
+// Mock Icon component to resolve accessibility issues in password validation tests.
+// The sign-up tests expect icons with specific aria-labels and colors for password validation.
 config.global.components = {
   Icon: {
     template: `
@@ -194,18 +160,67 @@ config.global.components = {
   },
 };
 
+// MARK: Suppress Warnings
+
+// Suppress known Vue warnings that don't affect test functionality:
+// - FriendlyCaptcha missing modelValue prop (from sign-up.spec.ts)
+// - Draggable missing itemKey prop (from ImageFileDropzoneMultiple.spec.ts)
+// eslint-disable-next-line no-console
+const originalWarn = console.warn;
+// eslint-disable-next-line no-console
+const originalError = console.error;
+
+beforeEach(() => {
+  // Suppress Vue warnings for specific, known test-environment issues only.
+  // eslint-disable-next-line no-console
+  console.warn = (...args: unknown[]) => {
+    const message = String(args[0] || "");
+    // Skip warnings for specific component issues that are test-environment only:
+    // - FriendlyCaptcha missing modelValue prop
+    // - Draggable missing itemKey prop
+    if (
+      (message.includes("FriendlyCaptcha") && message.includes("modelValue")) ||
+      (message.includes("Draggable") && message.includes("itemKey"))
+    ) {
+      return;
+    }
+    originalWarn(...args);
+  };
+
+  // eslint-disable-next-line no-console
+  console.error = (...args: unknown[]) => {
+    const message = String(args[0] || "");
+    // Skip errors for the same specific component issues only.
+    if (
+      (message.includes("FriendlyCaptcha") && message.includes("modelValue")) ||
+      (message.includes("Draggable") && message.includes("itemKey"))
+    ) {
+      return;
+    }
+    originalError(...args);
+  };
+});
+
 afterEach(() => {
+  // Restore original console methods.
+  // eslint-disable-next-line no-console
+  console.warn = originalWarn;
+  // eslint-disable-next-line no-console
+  console.error = originalError;
+
   // Clean up Pinia.
   setActivePinia(createPinia());
 
-  // Clean up color mode mock.
-  // @ts-expect-error: Property doesn't exist on globalThis
+  // Reset spy functions to default implementations.
   globalThis.useColorModeMock.mockReset();
-  // @ts-expect-error: Property doesn't exist on globalThis
-  globalThis.useColorModeMock.mockImplementation(useColorModeFn);
-});
+  globalThis.useColorModeMock.mockImplementation(() => ({
+    preference: "dark" as const,
+    value: "dark" as const,
+  }));
 
-afterAll(() => {
-  // @ts-expect-error: Property doesn't exist on globalThis
-  delete globalThis.useColorModeMock;
+  globalThis.useSidebarMock.mockReset();
+  globalThis.useSidebarMock.mockImplementation(() => ({
+    collapsed: false,
+    collapsedSwitch: false,
+  }));
 });

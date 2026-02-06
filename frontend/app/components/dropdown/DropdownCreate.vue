@@ -12,43 +12,46 @@
 </template>
 
 <script setup lang="ts">
-import type { DropdownLocation } from "~/types/location";
-import type { MenuSelector } from "~/types/menu/menu-selector";
-
-import { IconMap } from "~/types/icon-map";
-
 defineProps<{
   location?: DropdownLocation;
 }>();
+const { openModal: openModalCreateEvent } =
+  useModalHandlers("ModalCreateEvent");
+
+const { openModal: openModalCreateOrganization } = useModalHandlers(
+  "ModalCreateOrganization"
+);
+
+const { openModal: openModalCreateGroup } =
+  useModalHandlers("ModalCreateGroup");
 
 const createOptions: MenuSelector[] = [
   {
     id: 1,
     label: "i18n._global.new_event",
-    routeUrl: "/events/create",
     iconUrl: `${IconMap.EVENT}`,
     selected: false,
+    onClick: () => {
+      openModalCreateEvent();
+    },
   },
   {
     id: 2,
     label: "i18n.components.dropdown_create.new_organization",
-    routeUrl: "/organizations/create",
     iconUrl: "IconOrganization",
     selected: false,
+    onClick: () => {
+      openModalCreateOrganization();
+    },
   },
   {
     id: 3,
     label: "i18n._global.new_group",
-    routeUrl: "/groups/create",
     iconUrl: "IconGroup",
     selected: false,
-  },
-  {
-    id: 4,
-    label: "i18n._global.new_resource",
-    routeUrl: "/resources/create",
-    iconUrl: "IconResource",
-    selected: false,
+    onClick: () => {
+      openModalCreateGroup();
+    },
   },
 ];
 </script>

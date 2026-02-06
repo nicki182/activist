@@ -69,7 +69,7 @@
         </div>
         <div class="card-style mx-14 mt-5 w-full px-5 py-6">
           <h3 class="block font-medium" for="tagline">
-            {{ $t("i18n.pages._global.create.tagline") }}
+            {{ $t("i18n._global.tagline") }}
           </h3>
           <input
             id="tagline"
@@ -142,7 +142,7 @@ const submit = async () => {
     body: JSON.stringify(payload),
   });
 
-  //TODO: Push notification with toast should be added here
+  // TODO: Push notification with toast should be added here.
 
   window.location.href = "/organizations";
 };

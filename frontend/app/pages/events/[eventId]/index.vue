@@ -31,7 +31,7 @@
         v-for="[i, button] of eventButtons.entries()"
         :key="i"
         :selected="button.selected"
-        :to="localPath(button.routeUrl)"
+        :to="localPath(button.routeUrl as string)"
       >
         <div
           class="flex w-full items-center space-x-2 text-left text-sm font-medium"
@@ -39,7 +39,7 @@
           <span class="width-1/6">
             <Icon
               v-if="button.iconUrl"
-              class="h-5 w-5 flex-shrink-0"
+              class="h-5 w-5 shrink-0"
               :name="button.iconUrl"
             />
           </span>
@@ -66,15 +66,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Event } from "~/types/events/event";
-import type { MenuSelector } from "~/types/menu/menu-selector";
-
-import useMenuEntriesState from "~/composables/useMenuEntriesState";
-import { BreakpointMap } from "~/types/breakpoint-map";
-import { IconMap } from "~/types/icon-map";
-
 const props = defineProps<{
-  event: Event;
+  event: CommunityEvent;
 }>();
 
 const localPath = useLocalePath();

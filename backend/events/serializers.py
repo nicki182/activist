@@ -4,7 +4,7 @@ Serializers for the events app.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Union
 from uuid import UUID
 
@@ -220,7 +220,7 @@ class EventPOSTSerializer(serializers.ModelSerializer[Event]):
 
     texts = EventTextSerializer(write_only=True, required=False)
     social_links = EventSocialLinkSerializer(write_only=True, required=False)
-    offline_location = LocationSerializer(write_only=True)
+    physical_location = LocationSerializer(write_only=True)
     org_id = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all(), source="orgs"
     )
@@ -255,7 +255,7 @@ class EventSerializer(serializers.ModelSerializer[Event]):
 
     texts = EventTextSerializer(many=True, read_only=True)
     social_links = EventSocialLinkSerializer(many=True, read_only=True)
-    offline_location = LocationSerializer()
+    physical_location = LocationSerializer()
     resources = EventResourceSerializer(many=True, read_only=True)
     faq_entries = FaqSerializer(source="faqs", many=True, read_only=True)
     orgs = EventOrganizationSerializer(read_only=True)
@@ -312,7 +312,9 @@ class EventSerializer(serializers.ModelSerializer[Event]):
             and self._invalid_dates(creation_date, deletion_date)
         ):
             raise serializers.ValidationError(
-                ("The creation date cannot be after the deletion date."),
+                (
+                    "The creation date must be before the deletion date, and both of them should be a future date."
+                ),
                 code="invalid_date_order",
             )
 
@@ -364,9 +366,10 @@ class EventSerializer(serializers.ModelSerializer[Event]):
         Returns
         -------
         bool
-            True if the start is after the end (invalid).
+            True if the start is after the end time, or start is before current time (invalid).
             False otherwise (valid).
         """
+        curr_dt = datetime.now(timezone.utc)
         # Convert to datetime if they're strings.
         start_dt = parse_datetime(start) if isinstance(start, str) else start
         end_dt = parse_datetime(end) if isinstance(end, str) else end
@@ -374,7 +377,7 @@ class EventSerializer(serializers.ModelSerializer[Event]):
         return (
             isinstance(start_dt, datetime)
             and isinstance(end_dt, datetime)
-            and start_dt > end_dt
+            and (start_dt >= end_dt or start_dt < curr_dt)
         )
 
 

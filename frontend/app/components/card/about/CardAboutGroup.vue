@@ -27,7 +27,7 @@
           v-if="userIsSignedIn"
           @click="openModalTextGroup"
           @keydown.enter="openModalTextGroup"
-          data-testid="edit-icon"
+          data-testid="icon-edit"
         />
       </div>
       <div class="flex-col space-y-3">
@@ -90,9 +90,6 @@
 </template>
 
 <script setup lang="ts">
-import { useGetGroup } from "~/composables/queries/useGetGroup";
-import { IconMap } from "~/types/icon-map";
-
 const { openModal: openModalTextGroup } = useModalHandlers("ModalTextGroup");
 
 const { userIsSignedIn } = useUser();

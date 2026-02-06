@@ -73,8 +73,8 @@
           :event="event"
         />
         <MediaMapEvent
-          v-if="event?.offlineLocation && !textExpanded"
-          class="h-[17.5rem] w-full"
+          v-if="event?.physicalLocation && !textExpanded"
+          class="h-70 w-full"
           :event="event"
         />
       </div>
@@ -89,10 +89,6 @@
 </template>
 
 <script setup lang="ts">
-import { useGetEvent } from "~/composables/queries/useGetEvent";
-import { BreakpointMap } from "~/types/breakpoint-map";
-import { IconMap } from "~/types/icon-map";
-
 const { openModal: openModalSharePage } = useModalHandlers("ModalSharePage");
 
 const paramsEventId = useRoute().params.eventId;

@@ -12,17 +12,10 @@
       :underDevelopment="false"
     >
       <div class="flex space-x-2 lg:space-x-3">
-        <BtnAction
-          @click.stop="openModal()"
-          @keydown.enter="openModal()"
+        <BtnActionAdd
           ariaLabel="i18n.pages._global.resources.new_resource_aria_label"
-          class="w-max"
-          :cta="true"
-          fontSize="sm"
-          iconSize="1.35em"
-          label="i18n._global.new_resource"
-          :leftIcon="IconMap.PLUS"
-          linkTo="/"
+          :element="$t('i18n._global.resources_lower')"
+          :onClick="openModal"
         />
         <ModalResourceOrganization />
       </div>
@@ -52,12 +45,24 @@
         :swap-threshold="0.5"
         :touch-start-threshold="3"
       >
-        <template #item="{ element }">
+        <template #item="{ element, index }">
           <CardResource
+            :key="element.id"
+            :ref="(el: any) => (resourceCardList[index] = el?.root)"
+            @focus="canEdit(organization) ? onFocus(index) : undefined"
+            @keydown.down.prevent="
+              canEdit(organization) ? moveDown() : undefined
+            "
+            @keydown.up.prevent="canEdit(organization) ? moveUp() : undefined"
+            :class="{
+              selected: selectedIndex === index,
+              selectedResource: selectedIndex === index,
+            }"
             :entity="organization"
             :entityType="EntityType.ORGANIZATION"
             :isReduced="true"
             :resource="element"
+            :tabindex="canEdit(organization) ? 0 : -1"
           />
         </template>
       </draggable>
@@ -69,14 +74,8 @@
 <script setup lang="ts">
 import draggable from "vuedraggable";
 
-import type { Resource } from "~/types/content/resource";
-
-import { useOrganizationResourcesMutations } from "~/composables/mutations/useOrganizationResourcesMutations";
-import { useGetOrganization } from "~/composables/queries/useGetOrganization";
-import { EntityType } from "~/types/entity";
-import { IconMap } from "~/types/icon-map";
-
 const { openModal } = useModalHandlers("ModalResourceOrganization");
+const { canEdit } = useUser();
 
 const route = useRoute();
 const paramsOrgId = (route.params.orgId as string | undefined) ?? "";
@@ -86,6 +85,20 @@ const { reorderResources } = useOrganizationResourcesMutations(paramsOrgId);
 const resourceList = ref<Resource[]>([
   ...(organization.value?.resources || []),
 ]);
+const resourceCardList = ref<(HTMLElement | null)[]>([]);
+
+const { selectedIndex, onFocus, moveUp, moveDown } =
+  useDraggableKeyboardNavigation(
+    resourceList as unknown as Ref<Record<string, unknown>[]>,
+    async (list) => {
+      await reorderResources(list as unknown as Resource[]);
+    },
+    resourceCardList as unknown as Ref<(HTMLElement | null)[]>
+  );
+
+export type CardExpose = {
+  root: HTMLElement | null;
+};
 const onDragEnd = () => {
   resourceList.value.forEach((resource, index) => {
     resource.order = index;
@@ -124,5 +137,10 @@ watch(
 /* Ensure drag handles work properly. */
 .drag-handle {
   user-select: none;
+}
+
+.selected {
+  transform: scale(1.025);
+  background: highlight;
 }
 </style>

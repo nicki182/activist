@@ -182,8 +182,6 @@
 import { FetchError } from "ofetch";
 import { z } from "zod";
 
-import { IconMap } from "~/types/icon-map";
-
 const localePath = useLocalePath();
 const { checkRules } = usePasswordRules();
 
@@ -191,15 +189,15 @@ const { t } = useI18n();
 
 const signUpSchema = z
   .object({
-    userName: z.string().min(1, t("i18n.pages.auth._global.required")),
+    userName: z.string().min(1, t("i18n._global.required")),
     password: z.string(),
     confirmPassword: z.string(),
     email: z.string().email(t("i18n.pages.auth._global.invalid_email")),
     hasRead: z.boolean().refine((val) => val, {
-      message: t("i18n.pages.auth._global.required"),
+      message: t("i18n._global.required"),
     }),
     verifyCaptcha: z.boolean().refine((val) => val, {
-      message: t("i18n.pages.auth._global.required"),
+      message: t("i18n._global.required"),
     }),
   })
   .superRefine(({ confirmPassword, password }, ctx) => {

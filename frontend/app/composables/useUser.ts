@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-
-import type { Entity } from "~/types/entity";
 export const useUser = () => {
   const { data } = useAuthState();
   const userIsSignedIn = !!data.value;
@@ -43,5 +41,6 @@ export const useUser = () => {
     canDelete,
     canCreate,
     canView,
+    user: data.value?.user || null,
   };
 };

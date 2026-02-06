@@ -9,7 +9,7 @@
         v-if="userIsSignedIn"
         @click="openModalTextGroup"
         @keydown.enter="openModalTextGroup"
-        data-testid="edit-icon"
+        data-testid="icon-edit"
       />
       <div class="flex space-x-2 pt-2 lg:absolute lg:right-0 lg:pt-0">
         <BtnRouteInternal
@@ -41,9 +41,6 @@
 </template>
 
 <script setup lang="ts">
-import { useGetGroup } from "~/composables/queries/useGetGroup";
-import { IconMap } from "~/types/icon-map";
-
 const { openModal: openModalTextGroup } = useModalHandlers("ModalTextGroup");
 
 const { userIsSignedIn } = useUser();

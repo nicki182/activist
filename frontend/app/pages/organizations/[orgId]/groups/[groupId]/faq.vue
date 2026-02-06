@@ -5,30 +5,22 @@
     <Head>
       <Title>{{ group?.name }}&nbsp;{{ $t("i18n._global.faq") }}</Title>
     </Head>
-
     <HeaderAppPageGroup
       :header="group?.name + ' ' + $t('i18n._global.faq')"
       :tagline="$t('i18n.pages._global.faq_tagline')"
       :underDevelopment="false"
     >
       <div class="flex space-x-2 pb-3 lg:space-x-3 lg:pb-4">
-        <BtnAction
-          @click.stop="openModal()"
-          @keydown.enter="openModal()"
-          ariaLabel="i18n.pages._global.new_faq_aria_label"
-          class="w-max"
-          :cta="true"
-          fontSize="sm"
-          iconSize="1.35em"
-          label="i18n.pages._global.new_faq"
-          :leftIcon="IconMap.PLUS"
-        />
         <ModalFaqEntryGroup />
+        <BtnActionAdd
+          ariaLabel="i18n.pages._global.new_faq_aria_label"
+          :element="$t('i18n._global.faq')"
+          :onClick="openModal"
+        />
       </div>
     </HeaderAppPageGroup>
-
     <div
-      v-if="(group?.faqEntries || []).length"
+      v-if="faqList.length > 0"
       class="py-4"
       data-testid="organization-group-faq-list"
     >
@@ -54,48 +46,65 @@
         :swap-threshold="0.5"
         :touch-start-threshold="3"
       >
-        <template #item="{ element }">
+        <template #item="{ element, index }">
           <CardFAQEntry
+            :key="element.id"
+            :ref="(el: any) => (faqCardList[index] = el?.root)"
+            @delete-faq="handleDeleteFAQ"
+            @focus="isEditable ? onFocus(index) : undefined"
+            @keydown.down.prevent="isEditable ? moveDown() : undefined"
+            @keydown.up.prevent="isEditable ? moveUp() : undefined"
+            :class="{
+              selected: isEditable && selectedIndex === index,
+            }"
             :entity="group"
             :faqEntry="element"
             :pageType="EntityType.GROUP"
+            :tabindex="isEditable ? 0 : -1"
           />
         </template>
       </draggable>
     </div>
-
     <EmptyState v-else pageType="faq" :permission="false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 
-import type { FaqEntry } from "~/types/content/faq-entry";
-
-import { useGroupFAQEntryMutations } from "~/composables/mutations/useGroupFAQEntryMutations";
-import { useGetGroup } from "~/composables/queries/useGetGroup";
-import { EntityType } from "~/types/entity";
-import { IconMap } from "~/types/icon-map";
-
-const groupId = useRoute().params.groupId as string;
-const { data: group } = useGetGroup(groupId ?? "");
+const groupTabs = useGetGroupTabs();
 
 const { openModal } = useModalHandlers("ModalFaqEntryGroup");
 
-const groupTabs = getGroupTabs();
-const { reorderFAQs } = useGroupFAQEntryMutations(groupId);
+const paramsGroupId = useRoute().params.groupId;
+const groupId = typeof paramsGroupId === "string" ? paramsGroupId : "";
+
+const { data: group } = useGetGroup(groupId);
+const { reorderFAQs, deleteFAQ } = useGroupFAQEntryMutations(groupId);
+
 const faqList = ref<FaqEntry[]>([...(group?.value?.faqEntries || [])]);
+const faqCardList = ref<(HTMLElement | null)[]>([]);
+
+const { canEdit } = useUser();
+const isEditable = computed(() => canEdit(group.value));
+
+const { selectedIndex, onFocus, moveUp, moveDown } =
+  useDraggableKeyboardNavigation(
+    faqList as unknown as Ref<Record<string, unknown>[]>,
+    async (list) => {
+      await reorderFAQs(list as unknown as FaqEntry[]);
+    },
+    faqCardList as unknown as Ref<(HTMLElement | null)[]>
+  );
+
+export type CardExpose = {
+  root: HTMLElement | null;
+};
 
 watch(
-  () => group.value?.faqEntries,
+  () => group?.value?.faqEntries,
   (newVal) => {
-    if (newVal) {
-      faqList.value = newVal.slice();
-    } else {
-      faqList.value = [];
-    }
+    faqList.value = newVal?.slice() ?? [];
   },
   { immediate: true }
 );
@@ -106,6 +115,10 @@ const onDragEnd = async () => {
   });
 
   await reorderFAQs(faqList.value);
+};
+
+const handleDeleteFAQ = async (faqId: string) => {
+  await deleteFAQ(faqId);
 };
 </script>
 
@@ -132,5 +145,10 @@ const onDragEnd = async () => {
 /* Ensure drag handles work properly. */
 .drag-handle {
   user-select: none;
+}
+
+.selected {
+  transform: scale(1.025);
+  background: highlight;
 }
 </style>

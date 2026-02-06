@@ -10,6 +10,7 @@
       :id="opt.id"
       v-for="opt in options"
       :key="opt.id"
+      @click="opt?.onClick"
       :data-testid="opt['data-testid']"
       :isAddStyles="false"
       :selected="opt.selected"
@@ -31,10 +32,6 @@
 
 <script setup lang="ts">
 import { MenuItem } from "@headlessui/vue";
-
-import type { MenuSelector } from "~/types/menu/menu-selector";
-
-import { DropdownLocation } from "~/types/location";
 
 const props = defineProps<{
   location?: DropdownLocation;

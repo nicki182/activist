@@ -1,19 +1,18 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <template>
-  <div
+  <button
     v-if="canEditEntity"
-    class="cursor-pointer text-primary-text hover:text-distinct-text"
+    aria-labelledby="icon-edit-label"
+    class="cursor-pointer text-primary-text focus-brand hover:text-distinct-text"
     data-testid="icon-edit"
   >
     <Icon :name="IconMap.EDIT" size="1.2em" />
-  </div>
+    <!-- Note: Buttons need text for a11y. Adding the following for e2e tests. -->
+    <span id="icon-edit-label" hidden>Edit</span>
+  </button>
 </template>
 
 <script setup lang="ts">
-import type { Entity } from "~/types/entity";
-
-import { IconMap } from "~/types/icon-map";
-
 const props = defineProps<{
   entity?: Entity | null;
 }>();

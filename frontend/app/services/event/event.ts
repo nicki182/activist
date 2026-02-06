@@ -2,21 +2,11 @@
 // Events service: plain exported functions (no composables, no state).
 // Uses services/http.ts helpers and centralizes error handling + normalization.
 
-import type {
-  EventCreateFormData,
-  EventFilters,
-  EventResponse,
-  EventsResponseBody,
-  Event as EventT,
-} from "~/types/events/event";
-
 import { del, get, post } from "~/services/http";
-import { defaultEventText } from "~/types/events/event";
-import { errorHandler } from "~/utils/errorHandler";
 
 // MARK: Map API Response to Type
 
-export function mapEvent(res: EventResponse): EventT {
+export function mapEvent(res: EventResponse): EventResponse {
   return {
     id: res.id,
     name: res.name,
@@ -25,7 +15,7 @@ export function mapEvent(res: EventResponse): EventT {
     iconUrl: res.iconUrl,
     type: res.type,
     onlineLocationLink: res.onlineLocationLink,
-    offlineLocation: res.offlineLocation,
+    physicalLocation: res.physicalLocation,
     socialLinks: res.socialLinks ?? [],
     resources: res.resources ?? [],
     faqEntries: res.faqEntries ?? [],
@@ -33,13 +23,13 @@ export function mapEvent(res: EventResponse): EventT {
     endTime: res.endTime,
     creationDate: res.creationDate,
     orgs: res.orgs,
-    texts: res.texts ?? [defaultEventText],
+    texts: res.texts ?? [],
   };
 }
 
 // MARK: Get by ID
 
-export async function getEvent(id: string): Promise<EventT> {
+export async function getEvent(id: string): Promise<EventResponse> {
   try {
     const res = await get<EventResponse>(`/events/events/${id}`, {
       withoutAuth: true,
@@ -53,16 +43,30 @@ export async function getEvent(id: string): Promise<EventT> {
 // MARK: List All
 
 export async function listEvents(
-  filters: EventFilters = {}
-): Promise<EventT[]> {
+  filters: EventFilters & Pagination = { page: 1, page_size: 10 }
+): Promise<EventsPaginatedResponse> {
   try {
-    const query = new URLSearchParams(filters as Record<string, string>);
+    const query = new URLSearchParams();
+    // Handle topics specially: arrays become repeated params (?topics=A&topics=B).
+    const { topics, ...rest } = filters;
+    if (topics) {
+      topics.forEach((t) => {
+        if (!t) return;
+        query.append("topics", String(t));
+      });
+    }
+
+    // Add the remaining filters as single query params.
+    Object.entries(rest).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      query.append(key, String(value));
+    });
     const res = await get<EventsResponseBody>(
       `/events/events?${query.toString()}`,
       { withoutAuth: true }
     );
-    return res.results.map(mapEvent);
-  } catch (e) {
+    return { data: res.results.map(mapEvent), isLastPage: !res.next };
+  } catch (e: unknown) {
     throw errorHandler(e);
   }
 }
@@ -86,7 +90,8 @@ export async function createEvent(
     };
     const res = await post<EventResponse, typeof payload>(
       `/events/events`,
-      payload
+      payload,
+      { headers: { "Content-Type": "application/json" } }
     );
     return res.id;
   } catch (e) {

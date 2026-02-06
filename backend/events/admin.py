@@ -3,7 +3,11 @@
 Configure Django admin for the events app.
 """
 
+from typing import Any
+
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms import ModelForm
 
 from events.models import (
     Event,
@@ -16,9 +20,63 @@ from events.models import (
     Role,
 )
 
-# MARK: Register
+# MARK: Event Admin
 
-admin.site.register(Event)
+
+class EventAdminForm(ModelForm):  # type: ignore[type-arg]
+    """
+    Custom form for Event admin to handle conditional validation.
+    """
+
+    def clean(self) -> dict[str, Any]:
+        """
+        Validate and normalize Event admin form data based on the `setting` field.
+
+        Returns
+        -------
+        dict
+            Validated and normalized form data.
+        """
+        cleaned_data: dict[str, Any] = super().clean() or {}
+        setting = cleaned_data.get("setting")
+        online_location_link = cleaned_data.get("online_location_link")
+        physical_location = cleaned_data.get("physical_location")
+
+        if setting == "online":
+            if not online_location_link:
+                raise ValidationError(
+                    {
+                        "online_location_link": "Online location link is required for online events."
+                    }
+                )
+
+            cleaned_data["physical_location"] = None
+
+        elif setting == "physical":
+            if not physical_location:
+                raise ValidationError(
+                    {
+                        "physical_location": "Physical location is required for physical events."
+                    }
+                )
+
+            cleaned_data["online_location_link"] = None
+
+        return cleaned_data
+
+
+class EventAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    """
+    Admin interface for Event model.
+    """
+
+    class Meta:
+        model = Event
+
+    form = EventAdminForm
+
+
+admin.site.register(Event, EventAdmin)
 admin.site.register(Format)
 admin.site.register(Role)
 admin.site.register(EventFaq)

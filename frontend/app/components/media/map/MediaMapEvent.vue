@@ -1,26 +1,20 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <template>
-  <MediaMap
-    class="h-[17.5rem] w-full"
-    :pointer="pointer"
-    :type="MapType.POINT"
-  />
+  <MediaMap class="h-70 w-full" :pointer="pointer" :type="MapType.POINT" />
 </template>
 
 <script setup lang="ts">
-import type { Event, EventType } from "~/types/events/event";
+const props = defineProps<{
+  event: CommunityEvent;
+}>();
 
-import { MapType, type Pointer } from "~/types/map";
+const { event } = props;
 
 const organizationIcon = `/icons/map/tooltip_organization.png`;
 const calendarIcon = `/icons/map/tooltip_datetime.png`;
 const locationIcon = `/icons/map/tooltip_location.png`;
 const { getEventColorByType } = useColor();
 
-const props = defineProps<{
-  event: Event;
-}>();
-const { event } = props;
 const buildExpandedTooltip = () => {
   const root = document.createElement("div");
   root.className = "w-[220px] cursor-pointer font-sans";
@@ -55,7 +49,7 @@ const buildExpandedTooltip = () => {
 
             <div class="flex items-start text-xs text-black mb-1.5 font-semibold space-x-2">
               <img src="${locationIcon}"/>
-              <span>${event.offlineLocation?.displayName.split(",").slice(0, 3).join(", ")}</span>
+              <span>${event.physicalLocation?.displayName.split(",").slice(0, 3).join(", ")}</span>
             </div>
           </div>
         </div>
@@ -67,7 +61,7 @@ const buildExpandedTooltip = () => {
 const pointer: Pointer = {
   id: event.id,
   color: getEventColorByType(event.type as EventType),
-  location: event.offlineLocation || {
+  location: event.physicalLocation || {
     displayName: event.name,
     lat: "0",
     lon: "0",

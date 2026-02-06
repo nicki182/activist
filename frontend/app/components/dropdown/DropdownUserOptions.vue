@@ -21,16 +21,14 @@
 </template>
 
 <script setup lang="ts">
-import type { DropdownLocation } from "~/types/location";
-import type { MenuSelector } from "~/types/menu/menu-selector";
-
-import { IconMap } from "~/types/icon-map";
-
 defineProps<{
   location?: DropdownLocation;
   userIsSignedIn: boolean;
 }>();
+
 const { signOut } = useAuth();
+const { openModal: openModalCreateEvent } =
+  useModalHandlers("ModalCreateEvent");
 const userOptionsSignedIn: MenuSelector[] = [
   {
     id: "user-options-your-profile",
@@ -47,6 +45,9 @@ const userOptionsSignedIn: MenuSelector[] = [
     routeUrl: "/",
     iconUrl: `${IconMap.EVENT}`,
     selected: false,
+    onClick: () => {
+      openModalCreateEvent();
+    },
   },
   {
     id: "user-options-your-orgs",

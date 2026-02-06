@@ -69,10 +69,8 @@
       />
       <div v-else class="w-full px-1 pt-2">
         <div
-          :class="{
-            'style-cta my-0 flex items-center justify-center rounded-md !opacity-100 elem-shadow-sm':
-              sidebar.collapsed == true && sidebar.collapsedSwitch == true,
-          }"
+          v-if="sidebar.collapsed === true && sidebar.collapsedSwitch === true"
+          class="style-cta opacity-100! my-0 flex items-center justify-center rounded-md elem-shadow-sm"
         >
           <Icon class="mt-[0.125em]" :name="IconMap.FILTER" size="2em" />
         </div>
@@ -83,14 +81,6 @@
 </template>
 
 <script setup lang="ts">
-import { IconMap } from "~/types/icon-map";
-import { SearchBarLocation } from "~/types/location";
-import { SidebarType } from "~/types/sidebar-type";
-import {
-  currentRoutePathIncludes,
-  isCurrentRoutePathSubpageOf,
-} from "~/utils/routeUtils";
-
 const sidebar = useSidebar();
 const route = useRoute();
 const { currentRoute } = useRouter();

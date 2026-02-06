@@ -17,7 +17,7 @@
     <Icon
       v-if="iconName"
       :class="{
-        'h-5 w-5 flex-shrink-0': isSidebarLeftMenu,
+        'h-5 w-5 shrink-0': isSidebarLeftMenu,
       }"
       :name="iconName"
       size="1em"
@@ -39,8 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { IconMap } from "~/types/icon-map";
-
 const props = defineProps<{
   isSidebarLeftMenu?: boolean | undefined;
   isButton: boolean;

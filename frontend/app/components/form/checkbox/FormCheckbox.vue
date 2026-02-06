@@ -5,11 +5,11 @@
       :id="uuid"
       v-bind="{ ...$attrs, onChange: updateValue }"
       :checked="modelValue"
-      class="peer mb-0 h-[1.375rem] w-[1.375rem] cursor-pointer appearance-none rounded-sm border border-menu-selection bg-layer-0 focus-brand"
+      class="h-5.5 w-5.5 peer mb-0 cursor-pointer appearance-none rounded-sm border border-menu-selection bg-layer-0 focus-brand"
       type="checkbox"
     />
     <div
-      class="pointer-events-none absolute left-[0.2rem] hidden h-[1rem] w-[1rem] rounded-sm bg-menu-selection peer-checked:block"
+      class="pointer-events-none absolute left-[0.2rem] hidden h-4 w-4 rounded-sm bg-menu-selection peer-checked:block"
     ></div>
     <label
       v-if="label"
@@ -24,8 +24,6 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
 
-import useFormInput from "~/composables/useFormSetup";
-
 export interface Props {
   label?: string;
   modelValue?: boolean;
@@ -38,6 +36,6 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits(["update:modelValue"]);
-const { updateValue } = useFormInput(props, emit);
+const { updateValue } = useFormSetup(props, emit);
 const uuid = uuidv4();
 </script>

@@ -12,7 +12,9 @@
         :options="optionViews"
       />
     </div>
+
     <Form
+      :key="formKey"
       @submit="handleSubmit"
       class="px-1"
       :initial-values="formData"
@@ -32,12 +34,13 @@
           @update:modelValue="handleChange"
           :modelValue="(value.value as string)"
           :options="optionDays"
+          :toggleable="true"
         />
       </FormItem>
       <FormItem
         v-slot="{ id, handleChange, value }"
         data-testid="events-filter-event-type"
-        :label="$t('i18n.components.sidebar_left_filter_events.event_type')"
+        :label="$t('i18n.components._global.event_type')"
         name="type"
       >
         <!-- prettier-ignore-attribute :modelValue -->
@@ -46,12 +49,13 @@
           @update:modelValue="handleChange"
           :modelValue="(value.value as string)"
           :options="optionEventTypes"
+          :toggleable="true"
         />
       </FormItem>
       <FormItem
         v-slot="{ id, handleChange, value }"
         data-testid="events-filter-location-type"
-        :label="$t('i18n.components.sidebar_left_filter_events.location_type')"
+        :label="$t('i18n.components._global.location_type')"
         name="setting"
       >
         <!-- prettier-ignore-attribute :modelValue -->
@@ -60,6 +64,7 @@
           @update:modelValue="handleChange"
           :modelValue="(value.value as string)"
           :options="optionLocations"
+          :toggleable="true"
         />
       </FormItem>
       <FormItem
@@ -111,11 +116,6 @@ import type { LocationQueryRaw } from "vue-router";
 
 import { z } from "zod";
 
-import type { TopicEnum } from "~/types/content/topics";
-
-import { GLOBAL_TOPICS } from "~/types/content/topics";
-import { IconMap } from "~/types/icon-map";
-import { ViewType } from "~/types/view-types";
 const { t } = useI18n();
 
 const optionsTopics = GLOBAL_TOPICS.map((topic, index) => ({
@@ -183,45 +183,38 @@ const optionEventTypes = [
     value: "learn",
     key: "LEARN",
     content: t("i18n.components._global.learn"),
-    aria_label:
-      "i18n.components.sidebar_left_filter_events.event_type_learn_aria_label",
+    aria_label: "i18n.components._global.event_type_learn_aria_label",
     checkedClass: "style-learn",
   },
   {
     value: "action",
     key: "ACTION",
     content: t("i18n.components._global.action"),
-    aria_label:
-      "i18n.components.sidebar_left_filter_events.event_type_action_aria_label",
+    aria_label: "i18n.components._global.event_type_action_aria_label",
     checkedClass: "style-action",
   },
 ];
 
 const optionLocations = [
   {
-    value: "offline",
-    key: "OFFLINE",
-    content: t(
-      "i18n.components.sidebar_left_filter_events.location_type_in_person"
-    ),
-    aria_label:
-      "i18n.components.sidebar_left_filter_events.location_type_in_person_aria_label",
+    value: "physical",
+    key: "PHYSICAL",
+    content: t("i18n.components._global.location_type_physical"),
+    aria_label: "i18n.components._global.location_type_physical_aria_label",
     class: "text-nowrap",
   },
   {
     value: "online",
     key: "ONLINE",
-    content: t(
-      "i18n.components.sidebar_left_filter_events.location_type_online"
-    ),
-    aria_label:
-      "i18n.components.sidebar_left_filter_events.location_type_online_aria_label",
+    content: t("i18n.components._global.location_type_online"),
+    aria_label: "i18n.components._global.location_type_online_aria_label",
     class: "text-nowrap",
   },
 ];
 
 const route = useRoute();
 const router = useRouter();
+const formKey = ref(0);
 const updateViewType = (
   value: string | number | boolean | Record<string, unknown> | undefined
 ) => {
@@ -241,27 +234,29 @@ const updateViewType = (
 };
 
 const viewType = ref(ViewType.MAP);
-const q = route.query.view;
-if (typeof q === "string" && Object.values(ViewType).includes(q as ViewType)) {
-  viewType.value = q as ViewType;
-}
 const formData = ref({});
 watch(
   route,
   (form) => {
-    formData.value = { ...form.query };
+    const { view, ...rest } = (form.query as Record<string, unknown>) || {};
+    const topics = normalizeArrayFromURLQuery(form.query.topics);
+    formData.value = { ...rest, topics };
+    viewType.value =
+      typeof view === "string" &&
+      Object.values(ViewType).includes(view as ViewType)
+        ? (view as ViewType)
+        : ViewType.MAP;
   },
   { immediate: true }
 );
 const handleSubmit = (_values: unknown) => {
   const values: Record<string, unknown> = {};
   const input = (_values || {}) as Record<string, unknown>;
+
   Object.keys(input).forEach((key) => {
     if (input[key] && input[key] !== "") {
       if (key === "days") {
-        values["active_on"] = new Date(
-          new Date().setDate(new Date().getDate() + +(input[key] as string))
-        ).toISOString();
+        values["days_ahead"] = input[key];
         return;
       }
       if (
@@ -271,15 +266,17 @@ const handleSubmit = (_values: unknown) => {
       ) {
         return;
       }
-      if (key === "viewType") return;
+      if (key === "view") return;
       values[key] = input[key];
     }
-    if (route.query.name && route.query.name !== "")
-      values["name"] = route.query.name;
   });
+  if (route.query.name && route.query.name !== "")
+    values["name"] = route.query.name;
+
   router.push({
     query: {
       ...(values as LocationQueryRaw),
+      view: viewType.value,
     },
   });
 };

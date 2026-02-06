@@ -62,13 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Event } from "~/types/events/event";
-
-import { useLinkURL } from "~/composables/useLinkURL";
-import { BASE_BACKEND_URL_NO_V1 } from "~/utils/baseURLs";
-
 const props = defineProps<{
-  event: Event;
+  event: CommunityEvent;
   isPrivate?: boolean;
   isReduced?: boolean;
 }>();
@@ -94,7 +89,6 @@ const imageAlt = computed(() => {
     }
   );
 });
-
 const imageUrl = computed(() => {
   if (props.event?.iconUrl?.fileObject) {
     return `${BASE_BACKEND_URL_NO_V1}${props.event.iconUrl.fileObject}`;
@@ -103,8 +97,8 @@ const imageUrl = computed(() => {
 });
 
 const location = computed(() => {
-  if (props.event.offlineLocation) {
-    return props.event.offlineLocation.displayName.split(",")[0];
+  if (props.event.physicalLocation) {
+    return props.event.physicalLocation.displayName.split(",")[0];
   }
   return "";
 });

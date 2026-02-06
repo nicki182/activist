@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import type { Resource, ResourceInput } from "~/types/content/resource";
-
-import { post, put } from "~/services/http";
-import { errorHandler } from "~/utils/errorHandler";
+import { del, post, put } from "~/services/http";
 
 // MARK: Create
 
@@ -35,6 +32,19 @@ export async function updateOrganizationResource(
       { ...input, org: orgId },
       { headers: { "Content-Type": "application/json" } }
     );
+  } catch (e) {
+    const err = errorHandler(e);
+    throw err;
+  }
+}
+
+// MARK: Delete
+
+export async function deleteOrganizationResource(
+  resourceId: string
+): Promise<void> {
+  try {
+    await del(`/communities/organization_resources/${resourceId}`);
   } catch (e) {
     const err = errorHandler(e);
     throw err;

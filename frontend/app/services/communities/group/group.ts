@@ -2,19 +2,11 @@
 // Groups service: plain exported functions (no composables, no state).
 // Uses services/http.ts helpers and centralizes error handling + normalization.
 
-import type {
-  GroupResponse,
-  GroupsResponseBody,
-  Group as GroupT,
-} from "~/types/communities/group";
-
 import { get } from "~/services/http";
-import { defaultGroupText } from "~/types/communities/group";
-import { errorHandler } from "~/utils/errorHandler";
 
 // MARK: Map API Response to Type
 
-export function mapGroup(res: GroupResponse): GroupT {
+export function mapGroup(res: GroupResponse): Group {
   return {
     id: res.id,
     images: res.images ?? [],
@@ -30,13 +22,13 @@ export function mapGroup(res: GroupResponse): GroupT {
     events: res.events ?? [],
     resources: res.resources ?? [],
     faqEntries: res.faqEntries ?? [],
-    texts: res.texts ?? [defaultGroupText],
+    texts: res.texts ?? [],
   };
 }
 
 // MARK: Get Group by ID
 
-export async function getGroup(id: string): Promise<GroupT> {
+export async function getGroup(id: string): Promise<Group> {
   try {
     const res = await get<GroupResponse>(`/communities/groups/${id}`, {
       withoutAuth: true,
@@ -50,12 +42,32 @@ export async function getGroup(id: string): Promise<GroupT> {
 
 // MARK: List All Groups
 
-export async function listGroups(): Promise<GroupT[]> {
+export async function listGroups(
+  filters: GroupFilters & Pagination = { page: 1, page_size: 10 }
+): Promise<GroupPaginatedResponse> {
   try {
-    const res = await get<GroupsResponseBody>(`/communities/group`, {
-      withoutAuth: true,
+    const query = new URLSearchParams();
+    // Handle linked_organizations specially: arrays become repeated params (?linked_organizations=A&linked_organizations=B).
+    const { linked_organizations, ...rest } = filters;
+    if (linked_organizations) {
+      linked_organizations.forEach((t) => {
+        if (!t) return;
+        query.append("linked_organizations", String(t));
+      });
+    }
+    // Add the remaining filters as single query params.
+    Object.entries(rest).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      query.append(key, String(value));
     });
-    return res.results.map(mapGroup);
+    const res = await get<GroupsResponseBody>(
+      `/communities/groups?${query.toString()}`,
+      { withoutAuth: true }
+    );
+    return {
+      data: res.results.map(mapGroup),
+      isLastPage: !res.next,
+    };
   } catch (e) {
     const err = errorHandler(e);
     throw err;

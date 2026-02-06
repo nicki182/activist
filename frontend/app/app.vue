@@ -1,21 +1,20 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <template>
   <LoadingScreen />
-  <div>
-    <NuxtLayout>
-      <Toaster :richColors="true" :theme="isDark ? 'dark' : 'light'" />
-      <ModalCommandPalette :paletteData="commandPaletteData" />
-      <NuxtPage />
-    </NuxtLayout>
-  </div>
+  <NuxtLayout>
+    <Toaster :richColors="true" :theme="isDark ? 'dark' : 'light'" />
+    <ModalCommandPalette :paletteData="commandPaletteData" />
+    <ModalCreateEvent />
+    <ModalCreateOrganization />
+    <ModalCreateGroup />
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <script setup lang="ts">
 import { useMagicKeys, whenever } from "@vueuse/core";
 import { Toaster } from "vue-sonner";
 import "vue-sonner/style.css";
-
-import { commandPaletteData } from "~/types/command-palette";
 
 const { openModal: openModalCommandPalette } = useModalHandlers(
   "ModalCommandPalette"

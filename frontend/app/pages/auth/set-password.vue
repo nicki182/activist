@@ -53,7 +53,7 @@
       <div class="pt-4">
         <BtnAction
           ariaLabel="i18n.pages.auth.set_password.set_password"
-          class="flex max-h-[48px] items-center justify-center truncate md:max-h-[40px]"
+          class="flex max-h-12 items-center justify-center truncate md:max-h-10"
           :cta="true"
           fontSize="lg"
           label="i18n.pages.auth.set_password.set_password"
@@ -64,8 +64,6 @@
 </template>
 
 <script setup lang="ts">
-import { IconMap } from "~/types/icon-map";
-
 const userName = ref("");
 const password = ref("");
 const confirmPassword = ref("");
